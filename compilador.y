@@ -1,3 +1,28 @@
+
+%{
+
+#include <stdio.h>
+
+int c[25];
+
+struct dades 
+{ 
+  int operacio; 
+  int variable; 
+  int valor; 
+}; 
+
+%}
+%type <ovv_var> no_instancia 
+%type <number> valor expr_booleana
+
+%token <number> NUMBER ID
+%token PRINT ASV
+
+%left MGQ MPQ DFQ IGQ
+
+%right IF THEN ELSE
+
 %union
 {
   int number;
@@ -12,53 +37,43 @@ programa:
 ;
 
 instancia:
-       execute_print {
-        printf("\n %c = %d\n",$1.variable+97, c[$1.variable]);
+       PRINT ID {
+        printf("\n %c = %d\n",$2+97, c[$2]);
       }
-    | execute_set {
-        c[$1.variable]=$1.valor; 
-        printf("\n %c has been set: %d\n",$1.variable+97, $1.valor); 
+    | ID ASV NUMBER {
+        c[$1]=$3; 
+        printf("\n %c conte: %d\n",$1+97, $3); 
       }
-    | execute_conditional {
-        if ($1.operacio == 2){
-          c[$1.variable]=$1.valor; 
-          printf("\n %c has been set: %d\n",$1.variable+97, $1.valor); 
-        }else if($1.operacio == 1){
-           printf("\n %c = %d\n",$1.variable+97, c[$1.variable]);
-        }      
-      }
-;
-execute_print:
-      PRINT ID { 
-        struct dades a = {1,$2};
-        $$ = a; 
-      }
-;
-execute_set:  
-      ID ASV NUMBER { 
-        struct dades a = {2,$1,$3};
-        $$ = a;
-      } 
-;
-
-execute_conditional:
-    IF expr_booleana THEN no_exec_inst { 
+    | IF expr_booleana THEN no_instancia { 
       if ($2){
-        $$ = $4; 
-      }else{
-        struct dades a = {0};
-        $$ = a; 
+        if ($4.operacio == 2){
+          c[$4.variable]=$4.valor; 
+          printf("\n %c conte: %d\n",$4.variable+97, $4.valor); 
+        }else if($4.operacio == 1){
+           printf("\n %c = %d\n",$4.variable+97, c[$4.variable]);
+        }    
       }
     } 
-    | IF expr_booleana THEN no_exec_inst ELSE no_exec_inst  {
+    | IF expr_booleana THEN no_instancia ELSE no_instancia  {
       if ($2){
-        $$ = $4; 
+        if ($4.operacio == 2){
+          c[$4.variable]=$4.valor; 
+          printf("\n %c conte: %d\n",$4.variable+97, $4.valor); 
+        }else if($4.operacio == 1){
+           printf("\n %c = %d\n",$4.variable+97, c[$4.variable]);
+        }    
       }else{
-        $$ = $6;
+        if ($6.operacio == 2){
+          c[$6.variable]=$6.valor; 
+          printf("\n %c conte: %d\n",$6.variable+97, $6.valor); 
+        }else if($6.operacio == 1){
+           printf("\n %c = %d\n",$6.variable+97, c[$6.variable]);
+        }    
       }
     } 
 ;
-no_exec_inst: 
+    
+no_instancia: 
       PRINT ID { 
         struct dades a = {1,$2};
         $$ = a;
@@ -66,7 +81,7 @@ no_exec_inst:
     | ID ASV NUMBER {
         struct dades a = {2,$1,$3};
         $$ = a;} 
-    | IF expr_booleana THEN no_exec_inst {
+    | IF expr_booleana THEN no_instancia {
         if ($2){
           $$ = $4; 
         }else{
@@ -74,7 +89,7 @@ no_exec_inst:
           $$ = a; 
         }
       } 
-    | IF expr_booleana THEN no_exec_inst ELSE no_exec_inst {
+    | IF expr_booleana THEN no_instancia ELSE no_instancia {
         if ($2){
           $$ = $4; 
         }else{
